@@ -5,14 +5,14 @@
         window.shimIndexedDB = idbModules.shimIndexedDB;
         if (window.shimIndexedDB) {
             window.shimIndexedDB.__useShim = function(){
-                window.indexedDB = idbModules.shimIndexedDB;
-                window.IDBDatabase = idbModules.IDBDatabase;
-                window.IDBTransaction = idbModules.IDBTransaction;
-                window.IDBCursor = idbModules.IDBCursor;
-                window.IDBKeyRange = idbModules.IDBKeyRange;
+                window._indexedDB = idbModules.shimIndexedDB;
+                window._IDBDatabase = idbModules.IDBDatabase;
+                window._IDBTransaction = idbModules.IDBTransaction;
+                window._IDBCursor = idbModules.IDBCursor;
+                window._IDBKeyRange = idbModules.IDBKeyRange;
                 // On some browsers the assignment fails, overwrite with the defineProperty method
-                if (window.indexedDB !== idbModules.shimIndexedDB && Object.defineProperty) {
-                    Object.defineProperty(window, 'indexedDB', {
+                if (window._indexedDB !== idbModules.shimIndexedDB && Object.defineProperty) {
+                    Object.defineProperty(window, '_indexedDB', {
                         value: idbModules.shimIndexedDB
                     });
                 }
@@ -22,19 +22,22 @@
             };
         }
     }
-    
+
     /*
     prevent error in Firefox
     */
     if(!('indexedDB' in window)) {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
-    
+
     /*
     detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     */
     var poorIndexedDbSupport = false;
-    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+    if ((navigator.userAgent.match(/iP(hone|od|ad)/) && navigator.userAgent.match(/OS 8_/)) ||
+        navigator.userAgent.match(/Android 2/) ||
+        navigator.userAgent.match(/Android 3/) ||
+        navigator.userAgent.match(/Android 4\.[0-3]/)) {
         /* Chrome is an exception. It supports IndexedDb */
         if (!navigator.userAgent.match(/Chrome/)) {
             poorIndexedDbSupport = true;
@@ -58,6 +61,5 @@
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
-    
-}(window, idbModules));
 
+}(window, idbModules));
