@@ -1581,7 +1581,7 @@ var cleanInterface = false;
     }
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
-    
+
     var shimIndexedDB = {
         /**
          * The IndexedDB Method to create a new database and return the DB
@@ -1594,12 +1594,12 @@ var cleanInterface = false;
 
             sysdb.transaction(function(tx){
                 tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
-                    updateVersions(); 
+                    updateVersions();
                 });
             }, function() {
                idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
             });
-            
+
             function dbCreateError(){
                 if (calledDbCreateError) {
                     return;
@@ -1610,7 +1610,7 @@ var cleanInterface = false;
                 idbModules.util.callback("onerror", req, e);
                 calledDbCreateError = true;
             }
-            
+
             function openDB(oldVersion){
                 var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 req.readyState = "done";
@@ -1620,14 +1620,14 @@ var cleanInterface = false;
                 if (version <= 0 || oldVersion > version) {
                     idbModules.util.throwDOMException(0, "An attempt was made to open a database using a lower version than the existing version.", version);
                 }
-                
+
                 db.transaction(function(tx){
                     tx.executeSql("CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
                         tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
                             var e = idbModules.Event("success");
                             req.source = req.result = new idbModules.IDBDatabase(db, name, version, data);
                             if (oldVersion < version) {
-                                // DB Upgrade in progress 
+                                // DB Upgrade in progress
                                 sysdb.transaction(function(systx){
                                     systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function(){
                                         var e = idbModules.Event("upgradeneeded");
@@ -1662,10 +1662,10 @@ var cleanInterface = false;
                     }, dbCreateError);
                 }, dbCreateError);
             }
-            
+
             return req;
         },
-        
+
         "deleteDatabase": function(name){
             var req = new idbModules.IDBOpenRequest();
             var calledDBError = false;
@@ -1737,7 +1737,7 @@ var cleanInterface = false;
             return idbModules.Key.encode(key1) > idbModules.Key.encode(key2) ? 1 : key1 === key2 ? 0 : -1;
         }
     };
-    
+
     idbModules.shimIndexedDB = shimIndexedDB;
 }(idbModules));
 
@@ -1748,14 +1748,14 @@ var cleanInterface = false;
         window.shimIndexedDB = idbModules.shimIndexedDB;
         if (window.shimIndexedDB) {
             window.shimIndexedDB.__useShim = function(){
-                window.indexedDB = idbModules.shimIndexedDB;
-                window.IDBDatabase = idbModules.IDBDatabase;
-                window.IDBTransaction = idbModules.IDBTransaction;
-                window.IDBCursor = idbModules.IDBCursor;
-                window.IDBKeyRange = idbModules.IDBKeyRange;
+                window._indexedDB = idbModules.shimIndexedDB;
+                window._IDBDatabase = idbModules.IDBDatabase;
+                window._IDBTransaction = idbModules.IDBTransaction;
+                window._IDBCursor = idbModules.IDBCursor;
+                window._IDBKeyRange = idbModules.IDBKeyRange;
                 // On some browsers the assignment fails, overwrite with the defineProperty method
-                if (window.indexedDB !== idbModules.shimIndexedDB && Object.defineProperty) {
-                    Object.defineProperty(window, 'indexedDB', {
+                if (window._indexedDB !== idbModules.shimIndexedDB && Object.defineProperty) {
+                    Object.defineProperty(window, '_indexedDB', {
                         value: idbModules.shimIndexedDB
                     });
                 }
@@ -1765,19 +1765,22 @@ var cleanInterface = false;
             };
         }
     }
-    
+
     /*
     prevent error in Firefox
     */
     if(!('indexedDB' in window)) {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
-    
+
     /*
     detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     */
     var poorIndexedDbSupport = false;
-    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+    if ((navigator.userAgent.match(/iP(hone|od|ad)/) && navigator.userAgent.match(/OS 8_/)) ||
+        navigator.userAgent.match(/Android 2/) ||
+        navigator.userAgent.match(/Android 3/) ||
+        navigator.userAgent.match(/Android 4\.[0-3]/)) {
         /* Chrome is an exception. It supports IndexedDb */
         if (!navigator.userAgent.match(/Chrome/)) {
             poorIndexedDbSupport = true;
@@ -1801,6 +1804,5 @@ var cleanInterface = false;
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
-    
-}(window, idbModules));
 
+}(window, idbModules));
