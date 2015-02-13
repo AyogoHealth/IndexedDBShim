@@ -7,12 +7,7 @@
     }
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
-    sysdb.transaction(function(tx){
-        tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", []);
-    }, function() {
-       idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
-    });
-    
+
     var shimIndexedDB = {
         /**
          * The IndexedDB Method to create a new database and return the DB
@@ -22,7 +17,15 @@
         open: function(name, version){
             var req = new idbModules.IDBOpenRequest();
             var calledDbCreateError = false;
-            
+
+            sysdb.transaction(function(tx){
+                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
+                    updateVersions();
+                });
+            }, function() {
+               idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
+            });
+
             function dbCreateError(){
                 if (calledDbCreateError) {
                     return;
@@ -33,7 +36,7 @@
                 idbModules.util.callback("onerror", req, e);
                 calledDbCreateError = true;
             }
-            
+
             function openDB(oldVersion){
                 var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 req.readyState = "done";
@@ -43,14 +46,14 @@
                 if (version <= 0 || oldVersion > version) {
                     idbModules.util.throwDOMException(0, "An attempt was made to open a database using a lower version than the existing version.", version);
                 }
-                
+
                 db.transaction(function(tx){
                     tx.executeSql("CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
                         tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
                             var e = idbModules.Event("success");
                             req.source = req.result = new idbModules.IDBDatabase(db, name, version, data);
                             if (oldVersion < version) {
-                                // DB Upgrade in progress 
+                                // DB Upgrade in progress
                                 sysdb.transaction(function(systx){
                                     systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function(){
                                         var e = idbModules.Event("upgradeneeded");
@@ -70,23 +73,25 @@
                     }, dbCreateError);
                 }, dbCreateError);
             }
-            
-            sysdb.transaction(function(tx){
-                tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data){
-                    if (data.rows.length === 0) {
-                        // Database with this name does not exist
-                        tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function(){
-                            openDB(0);
-                        }, dbCreateError);
-                    } else {
-                        openDB(data.rows.item(0).version);
-                    }
+
+            function updateVersions() {
+                sysdb.transaction(function(tx){
+                    tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data){
+                        if (data.rows.length === 0) {
+                            // Database with this name does not exist
+                            tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function(){
+                                openDB(0);
+                            }, dbCreateError);
+                        } else {
+                            openDB(data.rows.item(0).version);
+                        }
+                    }, dbCreateError);
                 }, dbCreateError);
-            }, dbCreateError);
-            
+            }
+
             return req;
         },
-        
+
         "deleteDatabase": function(name){
             var req = new idbModules.IDBOpenRequest();
             var calledDBError = false;
@@ -158,6 +163,6 @@
             return idbModules.Key.encode(key1) > idbModules.Key.encode(key2) ? 1 : key1 === key2 ? 0 : -1;
         }
     };
-    
+
     idbModules.shimIndexedDB = shimIndexedDB;
 }(idbModules));
