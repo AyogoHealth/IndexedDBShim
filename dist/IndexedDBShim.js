@@ -1777,7 +1777,7 @@ var cleanInterface = false;
     detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     */
     var poorIndexedDbSupport = false;
-    if ((navigator.userAgent.match(/iP(hone|od|ad)/) && navigator.userAgent.match(/OS 8_/)) ||
+    if ((navigator.userAgent.match(/iP(hone|od|ad)/) && window.indexedDB === null) ||
         navigator.userAgent.match(/Android 2/) ||
         navigator.userAgent.match(/Android 3/) ||
         navigator.userAgent.match(/Android 4\.[0-3]/)) {
