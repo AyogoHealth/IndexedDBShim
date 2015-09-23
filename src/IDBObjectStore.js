@@ -214,7 +214,9 @@
             }
             for (var i = 0; i < this.indexNames.length; i++) {
                 var index = this.__indexes[this.indexNames[i]];
-                paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
+                if (value.hasOwnProperty(index.keyPath)) {
+                    paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
+                }
             }
             var sqlStart = ["INSERT INTO ", idbModules.util.quote(this.name), "("];
             var sqlEnd = [" VALUES ("];

@@ -320,6 +320,9 @@
                     // Also correct the indexes in the table
                     for (var i = 0; i < store.indexNames.length; i++) {
                         var index = store.__indexes[store.indexNames[i]];
+                        if (!value.hasOwnProperty(index.keyPath)) {
+                            continue;
+                        }
                         var indexKey = idbModules.Key.getValue(valueToUpdate, index.keyPath);
                         sql.push(",", idbModules.util.quote(index.name), "= ?");
                         params.push(idbModules.Key.encode(indexKey, index.multiEntry));
