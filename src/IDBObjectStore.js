@@ -214,7 +214,7 @@
             }
             for (var i = 0; i < this.indexNames.length; i++) {
                 var index = this.__indexes[this.indexNames[i]];
-                if (value.hasOwnProperty(index.keyPath)) {
+                if (value.hasOwnProperty(index.keyPath) && idbModules.Key.getValue(value, index.keyPath) !== null) {
                     paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
                 }
             }
