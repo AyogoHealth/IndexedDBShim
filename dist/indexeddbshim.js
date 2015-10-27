@@ -1833,6 +1833,9 @@ var idbModules = {  // jshint ignore:line
                     // Also correct the indexes in the table
                     for (var i = 0; i < store.indexNames.length; i++) {
                         var index = store.__indexes[store.indexNames[i]];
+                        if (!value.hasOwnProperty(index.keyPath)) {
+                            continue;
+                        }
                         var indexKey = idbModules.Key.getValue(valueToUpdate, index.keyPath);
                         sql.push(",", idbModules.util.quote(index.name), "= ?");
                         params.push(idbModules.Key.encode(indexKey, index.multiEntry));
@@ -2383,7 +2386,9 @@ var idbModules = {  // jshint ignore:line
             }
             for (var i = 0; i < this.indexNames.length; i++) {
                 var index = this.__indexes[this.indexNames[i]];
-                paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
+                if (value.hasOwnProperty(index.keyPath) && idbModules.Key.getValue(value, index.keyPath) !== null) {
+                    paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
+                }
             }
             var sqlStart = ["INSERT INTO ", idbModules.util.quote(this.name), "("];
             var sqlEnd = [" VALUES ("];
