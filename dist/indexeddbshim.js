@@ -1230,7 +1230,7 @@ var idbModules = {  // jshint ignore:line
 
     idbModules.Key = {
         encode: function(key, inArray) {
-            if (key === undefined) {
+            if (key === undefined || key === null) {
                 return null;
             }
             return types[getType(key)].encode(key, inArray);
